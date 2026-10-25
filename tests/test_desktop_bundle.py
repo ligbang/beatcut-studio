@@ -87,3 +87,8 @@ def test_self_contained_voice_engine(bundled, tmp_path):
     assert len(components) == 2
     covered = sum(Fraction(c.get('duration')[:-1]) for c in components)
     assert float(covered) == pytest.approx(music['duration'], abs=1 / 48000)
+    subtitle = bundled.get(exported['files']['subtitles.srt'])
+    assert subtitle.status_code == 200
+    cues = subtitle.content.decode('utf-8').strip().split('\n\n')
+    assert [cue.splitlines()[2] for cue in cues] == script.splitlines()
+    assert cues[0].splitlines()[1].split(' --> ')[1] == cues[1].splitlines()[1].split(' --> ')[0]

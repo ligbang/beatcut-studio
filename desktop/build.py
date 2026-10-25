@@ -38,7 +38,7 @@ if __name__ == '__main__':
                 minimum = max(minimum, tuple(map(int, value.split('.'))))
     info = dict(CFBundleName='BeatCut Studio', CFBundleDisplayName='拍点工坊',
                 CFBundleIdentifier='io.github.ligbang.beatcut-studio', CFBundleExecutable='BeatCut',
-                CFBundlePackageType='APPL', CFBundleShortVersionString='0.2.0', CFBundleVersion='1',
+                CFBundlePackageType='APPL', CFBundleShortVersionString='0.2.1', CFBundleVersion='1',
                 CFBundleIconFile='BeatCut', LSMinimumSystemVersion='.'.join(map(str, minimum)), NSHighResolutionCapable=True,
                 NSAppTransportSecurity={'NSAllowsLocalNetworking': True},
                 NSHumanReadableCopyright='MIT · BeatCut Studio contributors')

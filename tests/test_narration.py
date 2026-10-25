@@ -93,6 +93,39 @@ def test_narration_export_and_restore(voice):
         assert client.post('/api/narration/validate', json=saved).status_code == 200
 
 
+@pytest.mark.parametrize('fps, boundary', [('25', '00:00:00,520'), ('24000/1001', '00:00:00,500')])
+def test_export_srt_uses_manuscript_and_exported_cut_times(voice, fps, boundary):
+    project = NarrationProject(music_id=voice['id'], script='第一段，保留标点 & English。\n\n第二段。', cuts=[.51], fps=fps)
+    with TestClient(app, headers={'X-BeatCut': '1'}) as client:
+        response = client.post('/api/narration/export', json=project.model_dump())
+        assert response.status_code == 200, response.text
+        result = response.json()
+        subtitle = client.get(result['files']['subtitles.srt'])
+        assert subtitle.status_code == 200
+        assert 'subtitles.srt' in subtitle.headers['content-disposition']
+        assert subtitle.content.decode('utf-8') == (
+            f'1\n00:00:00,000 --> {boundary}\n第一段，保留标点 & English。\n\n'
+            f'2\n{boundary} --> 00:00:01,003\n第二段。\n\n'
+        )
+
+
+def test_srt_short_final_tail_still_has_positive_duration(voice):
+    # The final audio component may be shorter than a millisecond.
+    sf.write(voice['path'], np.zeros((48001, 2)), 48000)
+    voice['duration'] = 48001 / 48000
+    (media.media_dir(voice['id']) / 'meta.json').write_text(json.dumps(voice))
+    project = NarrationProject(music_id=voice['id'], script='第一段\n尾音', cuts=[1])
+    result = narration.export_project(project)
+    text = (Path(result['path']) / 'subtitles.srt').read_text(encoding='utf-8')
+    assert '00:00:01,000 --> 00:00:01,001\n尾音' in text
+
+
+def test_srt_timestamp_carries_minutes_and_hours():
+    assert narration.srt_timestamp(59999) == '00:00:59,999'
+    assert narration.srt_timestamp(60000) == '00:01:00,000'
+    assert narration.srt_timestamp(3600000) == '01:00:00,000'
+
+
 def test_narration_official_apple_dtd(voice):
     from lxml import etree
     paths = list(Path('/Applications').glob('Final Cut*.app/Contents/Frameworks/Interchange.framework/Versions/A/Resources/FCPXMLv1_10.dtd'))

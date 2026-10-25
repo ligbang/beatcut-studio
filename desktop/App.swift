@@ -70,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUI
     }
 
     @objc func about() {
-        NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "BeatCut Studio · 拍点工坊", .applicationVersion: "0.2.0", .credits: NSAttributedString(string: "本地音乐节拍标记与 Final Cut Pro 卡点剪辑\nMIT 开源 · 所有媒体在本机处理")])
+        NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "BeatCut Studio · 拍点工坊", .applicationVersion: "0.2.1", .credits: NSAttributedString(string: "本地音乐节拍标记与 Final Cut Pro 卡点剪辑\nMIT 开源 · 所有媒体在本机处理")])
     }
 
     func startEngine() {

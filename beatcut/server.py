@@ -206,7 +206,7 @@ def export(project: Project):
 
 @app.get("/api/exports/{export_id}/{name}")
 def download(export_id: str, name: str):
-    if not re.fullmatch(r"[a-f0-9]{32}", export_id) or name not in {"timeline.fcpxml", "music.wav", "markers.csv", "project.beatcut.json"}:
+    if not re.fullmatch(r"[a-f0-9]{32}", export_id) or name not in {"timeline.fcpxml", "subtitles.srt", "music.wav", "markers.csv", "project.beatcut.json"}:
         raise HTTPException(404)
     return FileResponse(storage.DATA / "exports" / export_id / name, filename=name)
 

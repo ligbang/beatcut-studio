@@ -204,14 +204,20 @@ def validate_project(project):
     return meta, parts
 
 
-def make_narration_xml(project, meta):
-    _, parts = validate_project(project)
+def export_timing(project, meta):
     info = sf.info(meta['path'])
     total = Fraction(info.frames, info.samplerate)
     frame = 1 / Fraction(project.fps)
     cuts = [Fraction(0), *(round(Fraction(str(t)) / frame) * frame for t in project.cuts), total]
     if any(b <= a for a, b in zip(cuts, cuts[1:])):
         raise ValueError('两个切点量化到同一帧，请拉开距离后再导出')
+    return info, frame, cuts
+
+
+def make_narration_xml(project, meta):
+    _, parts = validate_project(project)
+    info, frame, cuts = export_timing(project, meta)
+    total = cuts[-1]
     root = ET.Element('fcpxml', version='1.10')
     resources = ET.SubElement(root, 'resources')
     ET.SubElement(resources, 'format', id='r1', frameDuration=time_value(frame), width='1920', height='1080', colorSpace='1-1-1 (Rec. 709)')
@@ -234,19 +240,32 @@ def make_narration_xml(project, meta):
     return b'<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE fcpxml>\n' + ET.tostring(root, encoding='utf-8')
 
 
+def srt_timestamp(milliseconds):
+    seconds, milliseconds = divmod(milliseconds, 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f'{hours:02}:{minutes:02}:{seconds:02},{milliseconds:03}'
+
+
 def export_project(project):
     meta, parts = validate_project(project)
     xml = make_narration_xml(project, meta)
+    _, _, cuts = export_timing(project, meta)
+    # SRT has millisecond precision; shared cuts round down, the audio end rounds up.
+    milliseconds = [math.floor(t * 1000) for t in cuts[:-1]] + [math.ceil(cuts[-1] * 1000)]
     export_id = uuid.uuid4().hex
     folder = storage.DATA / 'exports' / export_id
     folder.mkdir(parents=True)
     (folder / 'timeline.fcpxml').write_bytes(xml)
+    (folder / 'subtitles.srt').write_text(''.join(
+        f'{i + 1}\n{srt_timestamp(a)} --> {srt_timestamp(b)}\n{text}\n\n'
+        for i, (text, a, b) in enumerate(zip(parts, milliseconds, milliseconds[1:]))
+    ), encoding='utf-8')
     (folder / 'project.beatcut.json').write_text(project.model_dump_json(indent=2))
     with (folder / 'markers.csv').open('w', encoding='utf-8-sig', newline='') as output:
         writer = csv.writer(output)
         writer.writerow(['paragraph', 'start_seconds', 'end_seconds', 'text'])
-        cuts = [0, *project.cuts, meta['duration']]
         for i, (text, a, b) in enumerate(zip(parts, cuts, cuts[1:])):
-            writer.writerow([i + 1, a, b, text])
+            writer.writerow([i + 1, float(a), float(b), text])
     return dict(id=export_id, path=str(folder), paragraphs=len(parts), duration=meta['duration'],
-                files={name: f'/api/exports/{export_id}/{name}' for name in ['timeline.fcpxml', 'markers.csv', 'project.beatcut.json']})
+                files={name: f'/api/exports/{export_id}/{name}' for name in ['timeline.fcpxml', 'subtitles.srt', 'markers.csv', 'project.beatcut.json']})
