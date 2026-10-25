@@ -1,0 +1,12 @@
+.venv/
+.data/
+__pycache__/
+.pytest_cache/
+.DS_Store
+*.egg-info/
+test-results/
+node_modules/
+.env
+build/
+dist/
+*.spec.bak

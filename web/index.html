@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>拍点工坊 · BeatCut Studio</title>
+  <link rel="stylesheet" href="/style.css"><link rel="icon" href="data:,">
+</head>
+<body>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="app-brand"><span class="brand-symbol">▥</span><strong>BeatCut <span>Studio</span></strong><small>拍点工坊</small></div>
+      <div class="project-name"><input id="project-name" aria-label="项目名称" value="未命名项目" maxlength="120"><span id="save-state">未保存</span></div>
+      <div class="header-actions"><button id="open-project" title="打开项目 · ⌘O">打开</button><button id="save-project" title="保存项目 · ⌘S">保存</button><button id="demo">演示项目</button><a href="/help.html" target="_blank" aria-label="使用说明">?</a></div>
+    </header>
+    <main>
+      <section id="music-section" class="panel music-panel">
+        <div id="music-drop" class="dropzone" role="button" tabindex="0" aria-label="导入音乐，支持拖放">
+          <span class="music-symbol">♫</span><div><strong id="music-name">将音乐拖入此处，或点击选择文件</strong><p id="music-meta">WAV · MP3 · M4A · FLAC · AIFF</p></div><button id="analyze" class="primary" disabled>分析节拍</button>
+        </div>
+        <div class="wave-scroll" id="wave-scroll"><canvas id="waveform" height="230" aria-label="音乐波形：点击试听，拖动标记调整时间，Shift 点击添加标记" tabindex="0"></canvas><div id="wave-empty"><span class="empty-wave">▁ ▂ ▅ ▃ ▇ ▄ ▂ ▅ ▃ ▁</span><p>从一首音乐开始</p><small>导入音频后，自动查找节拍并生成剪辑标记</small></div></div>
+        <div class="transport">
+          <div class="playback"><button id="play" class="play-button" aria-label="播放或暂停" disabled>▶</button><span id="current-time">00:00.000</span><span class="muted">/</span><span id="total-time" class="muted">00:00.000</span><label class="click-track"><input type="checkbox" id="metronome"> 节拍提示音</label></div>
+          <div class="legend"><span><i class="amber"></i>节拍</span><span><i class="red"></i>强制换镜</span></div>
+          <div class="wave-actions"><label class="zoom-label">− <input id="zoom" type="range" min="1" max="12" value="1" step="1" aria-label="波形缩放"> ＋</label><button id="add-marker" disabled>＋ 标记</button><button id="undo" disabled title="撤销标记编辑">↶</button></div>
+        </div>
+        <div class="beats-panel">
+          <div class="beats-summary"><h2>节拍控制</h2><span id="beat-count">尚未分析</span><div class="bpm-display"><strong id="bpm-value">—</strong><span>BPM</span></div><button id="half-tempo">÷ 2</button><button id="double-tempo">× 2</button><span class="subtle">半速 / 倍速修正</span></div>
+          <div class="marker-editor"><span id="selected-marker">点击波形中的节拍线以编辑</span><label>时间 <input id="marker-time" type="number" step="0.001" min="0" disabled> 秒</label><label><input id="marker-enabled" type="checkbox" disabled> 启用</label><label><input id="marker-forced" type="checkbox" disabled> 强制换镜</label><button id="delete-marker" disabled>删除</button></div>
+          <details class="grid-details"><summary>手动节拍网格</summary><div class="inline-fields"><label>BPM <input id="grid-bpm" type="number" value="120" min="20" max="400" step="0.1"></label><label>第一拍 / 秒 <input id="grid-first" type="number" value="0" min="0" step="0.001"></label><button id="apply-grid">重建等距节拍</button><span class="hint">适用于固定速度音乐，将替换标记，可撤销。</span></div></details>
+        </div>
+        <div class="wave-help">点击定位 · 拖动标记微调 · Shift 点击添加 · 空格播放</div>
+      </section>
+      <section class="panel duration-panel">
+        <div class="section-heading"><h2><span class="section-icon">◷</span>调整音乐长度</h2><span id="range-summary" class="range-summary">整首音乐</span></div>
+        <div class="duration-controls"><div class="inline-fields"><label>开始 <input id="range-start" type="number" value="0" min="0" step="0.01"> 秒</label><label>结束 <input id="range-end" type="number" value="0" min="0" step="0.01"> 秒</label><button id="apply-range">使用选区</button><button id="reset-range" class="quiet">恢复整曲</button></div><button id="preview-edit">▶ 试听剪后音乐</button></div>
+        <details><summary>自动缩短音乐 · 保留开头和结尾</summary><div class="inline-fields"><label>目标时长 <input id="target-duration" type="number" value="30" min="2" step="1"> 秒</label><label>允许误差 ± <input id="tolerance" type="number" value="2" min="0" max="30" step="0.5"> 秒</label><button id="suggest" class="secondary">寻找拼接位置</button></div><div id="suggestions"></div><p class="hint">按 4 拍对齐并比较声音相似度。选择方案后请试听接缝。</p></details><audio id="edit-audio" controls hidden></audio>
+      </section>
+      <section id="clips-section" class="panel timeline-panel">
+        <div class="section-heading"><h2><span class="section-icon">▤</span>创建时间线 <small>Final Cut Pro 项目</small></h2><span class="local-badge"><i class="green-dot"></i>本机处理</span></div>
+        <div class="timeline-settings"><label>内容<select id="mode"><option value="markers">音乐 + 节拍标记</option><option value="placeholders">音乐 + 占位剪辑</option><option value="clips">音乐 + 素材卡点粗剪</option></select></label><label>画幅<select id="resolution"><option value="1920,1080">1920 × 1080 · 16:9</option><option value="3840,2160">3840 × 2160 · 4K</option><option value="1080,1920">1080 × 1920 · 竖屏</option><option value="1080,1080">1080 × 1080 · 方形</option></select></label><label>帧率<select id="fps"><option value="24000/1001">23.976 fps</option><option value="24">24 fps</option><option value="25" selected>25 fps</option><option value="30000/1001">29.97 fps</option><option value="30">30 fps</option><option value="50">50 fps</option><option value="60000/1001">59.94 fps</option><option value="60">60 fps</option></select></label></div>
+        <details id="clips-details"><summary>素材与剪辑节奏 <span id="clip-count" class="count">0</span></summary>
+          <div class="pacing-settings"><label>每镜拍数<div class="segmented" id="intervals"><button data-interval="1" aria-label="每镜 1 拍">1</button><button data-interval="2" aria-label="每镜 2 拍">2</button><button data-interval="4" aria-label="每镜 4 拍" class="selected">4</button><button data-interval="8" aria-label="每镜 8 拍">8</button><button data-interval="16" aria-label="每镜 16 拍">16</button></div></label><label>节奏曲线<select id="pace"><option value="flat">均匀</option><option value="crescendo">渐快</option><option value="valley">两头快，中间慢</option><option value="rise-valley">起伏，结尾加速</option></select></label><label>素材顺序<select id="order"><option value="sequence">按列表循环</option><option value="shuffle">随机循环</option></select></label><label>首镜<select id="first-clip"><option value="">自动</option></select></label><label>尾镜<select id="last-clip"><option value="">自动</option></select></label></div>
+          <div class="media-heading"><span>视频 / 图片素材</span><button id="add-clips">＋ 添加素材</button></div><div id="clip-drop" class="clip-drop"><div class="empty-clips"><span>▧</span><p>将视频或图片拖到这里</p><small>按音乐节拍生成可继续编辑的粗剪</small></div></div>
+          <div class="sequence-heading"><strong>编排预览</strong><span id="sequence-summary">设置节奏后生成镜头序列</span><button id="make-plan" class="secondary">生成编排</button></div><div id="sequence" class="sequence"><div class="sequence-empty">等待素材与节拍</div></div><div class="sequence-audio"><span>♫</span><span id="audio-sequence-name">音乐轨道</span><span id="audio-sequence-duration">—</span></div><p id="plan-warning" class="hint">此处预览镜头顺序与长度，完整视频请导入 Final Cut Pro 播放。</p>
+        </details>
+      </section>
+      <section id="export-section" class="panel export-panel"><div><strong>准备好，把节奏交给画面。</strong><p>FCPXML · 剪后音乐 WAV · 标记 CSV · 项目文件</p></div><button class="primary export-button" id="export">⇧ 导出到 Final Cut Pro</button><button id="export-top" hidden>导出</button></section>
+      <section class="panel export-result" id="export-result" hidden></section>
+      <footer><div id="status" class="status" role="status" aria-live="polite"><span class="green-dot"></span><span>准备就绪。导入音乐，或打开演示项目。</span></div><span class="version">v0.1.0 · MIT 开源</span></footer>
+    </main>
+  </div>
+  <input id="music-input" type="file" accept="audio/*,.aif,.aiff,.flac,.m4a" hidden><input id="clips-input" type="file" accept="video/*,image/*,.mkv,.mov" multiple hidden><input id="project-input" type="file" accept=".json" hidden>
+  <audio id="audio" preload="metadata"></audio><div id="busy" hidden><span class="spinner"></span><span id="busy-label">正在处理</span></div>
+  <script type="module" src="/app.js"></script>
+</body></html>
