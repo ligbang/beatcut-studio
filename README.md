@@ -1,12 +1,25 @@
 # BeatCut Studio · 拍点工坊
 
-**Local music beat markers and editable beat-synced rough cuts for Final Cut Pro.**
+**Local beat markers, music-driven rough cuts and manuscript-based narration splits for Final Cut Pro.**
 
-一首音乐、一组镜头，生成可继续编辑的 Final Cut Pro 时间线。中文界面，本机运行，MIT 开源，无账号、无付费 API、无遥测。
+一首音乐、一组镜头，生成卡点粗剪；一段旁白、一份原文，生成按段落裁切的音频时间线。中文界面，本机运行，MIT 开源，无账号、无付费 API、无遥测。
 
 这是独立实现的开源项目，与 BeatMark、Ulti.Media 或 Apple 无关联。借鉴的是音乐驱动剪辑的工作流程，没有使用商业软件的代码或界面素材。
 
 ![Mac App](docs/mac-app.jpg)
+
+## 旁白按文案自动分段
+
+在顶部选择 **旁白分段**，导入旁白音频，粘贴生成音频时使用的原文（每段一行，空行忽略）。点击“按文案对齐段落”，逐段试听或微调起点，再导出 FCPXML。FCP 内每段都是以原文命名的独立音频片段。
+
+- 默认保留所有原始音频与停顿；相邻片段连续引用同一音源，不做静音删除、不加速、不重写文案。内部切点对齐项目帧率，音频组件保留全部采样；时间线末尾向上补齐到整帧，最多多出不足一帧的空白，避免 FCP 截掉尾音。
+- 支持最长 30 分钟中文旁白；针对 5–20 分钟工作流，以 30 秒音频块和前后上下文处理，再匹配原文段落。
+- 使用 Qwen3-ASR + Qwen3-ForcedAligner 的 MLX 实现，仅在 Apple Silicon 本机运行。首次需联网下载约 2.1 GB 模型，完成后离线使用。音频和文案不上传。源码运行旁白模式需额外安装 `requirements-narration.txt`。
+- 模型放在 `~/Library/Application Support/BeatCut Studio/models/`，不会写入 Git 仓库。已分析音频会缓存文字时间戳，更改文案后可以复用。
+- “文本匹配率”表示原文与识别文字的字符对应比例，并非时间准确度置信分数。漏读、错读、重复、数字念法差异会提示复核；完全无法定位的段落会拒绝生成猜测切点。
+- 可保存旁白项目 JSON；恢复后无需重新分析。导出包括 FCPXML、段落时间表 CSV 和项目 JSON。当前不自动移除句间静音。
+
+![旁白分段](docs/narration-app.jpg)
 
 ## 已实现
 
@@ -60,7 +73,7 @@ python3 -m venv .venv
 .venv/bin/python -m uvicorn beatcut.server:app --host 127.0.0.1 --port 8765
 ```
 
-`requirements-lock.txt` 记录本次 macOS / Python 3.11 验证过的依赖版本，复现环境可安装该文件。首次安装需要联网，音乐分析和编辑不需要网络。
+`requirements-lock.txt` 记录本次 macOS / Python 3.11 验证过的依赖版本，复现环境可安装该文件。首次安装需要联网；旁白模式需先下载模型，完成后全部分析与编辑可离线进行。
 
 ## 使用
 
@@ -90,7 +103,7 @@ python3 -m venv .venv
 
 ## 当前边界
 
-- 这是 **0.1.0 可用原型**，覆盖核心工作流，并非商业产品全部功能的等价替代。
+- 这是 **0.2.0 可用原型**，覆盖核心工作流，并非商业产品全部功能的等价替代。
 - 自动 BPM 可能出现半速 / 倍速歧义；变化很大的自由速度、弱鼓点、复杂拍号仍需手动修正。
 - “每 4 拍”分组不等于自动识别小节重拍、主歌、副歌。缩短建议使用局部音色相似度，不是音乐语义重编曲；有些接缝仍能听出来。
 - 页面提供音乐试听与镜头编排示意；完整视频播放与最终渲染在 FCP 中完成。
@@ -105,14 +118,17 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python -m pytest -q
 node --check web/app.js  # 可选，仅 JS 语法检查，不是运行依赖
+node --check web/narration.js
 ```
 
-结构：`beatcut/media.py` 处理音频与素材，`timeline.py` 计算镜头与 FCPXML，`models.py` 校验项目，`server.py` 提供本地 API，`web/` 是无需构建步骤的 HTML / CSS / JS 界面，`desktop/App.swift` 是 macOS 原生外壳，`desktop/backend.py` 管理 App 的独立本地服务。
+结构：`beatcut/media.py` 处理音频与素材，`timeline.py` 计算镜头与 FCPXML，`narration.py` 对齐旁白并生成段落剪辑，`models.py` 校验音乐项目，`server.py` 提供本地 API，`web/` 是无需构建步骤的 HTML / CSS / JS 界面，`desktop/App.swift` 是 macOS 原生外壳，`desktop/backend.py` 管理 App 的独立本地服务。
 
 测试细节见 [docs/TESTING.md](docs/TESTING.md)，功能范围见 [docs/FEATURES.md](docs/FEATURES.md)。欢迎贡献可复现的失败案例、算法改进和兼容性测试，请勿提交个人媒体或密钥。
 
 ## 开源依赖
 
-代码按 [MIT](LICENSE) 许可发布。依赖保留各自的许可：librosa（ISC）、NumPy / SciPy（BSD）、SoundFile（BSD）、FastAPI / Uvicorn（MIT），FFmpeg 取决于本机编译选项（LGPL / GPL）。仓库不分发 FFmpeg 二进制或第三方音乐；演示媒体由本项目生成。
+本项目代码按 [MIT](LICENSE) 许可发布。旁白使用 MLX / MLX-Audio（MIT）以及 Qwen 模型（Apache-2.0）。依赖保留各自的许可：librosa（ISC）、NumPy / SciPy（BSD）、SoundFile（BSD）、FastAPI / Uvicorn（MIT），FFmpeg 取决于本机编译选项（LGPL / GPL）。仓库不分发 FFmpeg 二进制或第三方音乐；演示媒体由本项目生成。
 
 界面工作流参考作者公开介绍中的波形、音乐长度、时间线内容与导出四段布局：[BeatMark Pro 界面介绍](https://fcp.co/final-cut-pro/news/2590-beatmark-pro-music-driven-video-editing-for-final-cut-pro)。名称、图标和实现独立制作。
+
+旁白实现参考：[MLX-Audio 的 Qwen3 模型接口](https://github.com/Blaizzy/mlx-audio/blob/main/mlx_audio/stt/models/qwen3_asr/README.md)、[Qwen3-ASR 官方项目](https://github.com/QwenLM/Qwen3-ASR)。

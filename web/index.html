@@ -9,6 +9,7 @@
   <div class="workspace">
     <header class="topbar">
       <div class="app-brand"><span class="brand-symbol">▥</span><strong>BeatCut <span>Studio</span></strong><small>拍点工坊</small></div>
+      <nav class="mode-tabs"><a class="active" href="/">音乐卡点</a><a href="/narration.html">旁白分段</a></nav>
       <div class="project-name"><input id="project-name" aria-label="项目名称" value="未命名项目" maxlength="120"><span id="save-state">未保存</span></div>
       <div class="header-actions"><button id="open-project" title="打开项目 · ⌘O">打开</button><button id="save-project" title="保存项目 · ⌘S">保存</button><button id="demo">演示项目</button><a href="/help.html" target="_blank" aria-label="使用说明">?</a></div>
     </header>
@@ -46,7 +47,7 @@
       </section>
       <section id="export-section" class="panel export-panel"><div><strong>准备好，把节奏交给画面。</strong><p>FCPXML · 剪后音乐 WAV · 标记 CSV · 项目文件</p></div><button class="primary export-button" id="export">⇧ 导出到 Final Cut Pro</button><button id="export-top" hidden>导出</button></section>
       <section class="panel export-result" id="export-result" hidden></section>
-      <footer><div id="status" class="status" role="status" aria-live="polite"><span class="green-dot"></span><span>准备就绪。导入音乐，或打开演示项目。</span></div><span class="version">v0.1.0 · MIT 开源</span></footer>
+      <footer><div id="status" class="status" role="status" aria-live="polite"><span class="green-dot"></span><span>准备就绪。导入音乐，或打开演示项目。</span></div><span class="version">v0.2.0 · MIT 开源</span></footer>
     </main>
   </div>
   <input id="music-input" type="file" accept="audio/*,.aif,.aiff,.flac,.m4a" hidden><input id="clips-input" type="file" accept="video/*,image/*,.mkv,.mov" multiple hidden><input id="project-input" type="file" accept=".json" hidden>

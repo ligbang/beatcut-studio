@@ -70,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUI
     }
 
     @objc func about() {
-        NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "BeatCut Studio · 拍点工坊", .applicationVersion: "0.1.0", .credits: NSAttributedString(string: "本地音乐节拍标记与 Final Cut Pro 卡点剪辑\nMIT 开源 · 所有媒体在本机处理")])
+        NSApp.orderFrontStandardAboutPanel(options: [.applicationName: "BeatCut Studio · 拍点工坊", .applicationVersion: "0.2.0", .credits: NSAttributedString(string: "本地音乐节拍标记与 Final Cut Pro 卡点剪辑\nMIT 开源 · 所有媒体在本机处理")])
     }
 
     func startEngine() {
@@ -142,6 +142,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKUI
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = parameters.allowsMultipleSelection
         panel.beginSheetModal(for: window) { response in completionHandler(response == .OK ? panel.urls : nil) }
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        let alert = NSAlert()
+        alert.messageText = "切换模式前要保存项目吗？"
+        alert.informativeText = message
+        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: "切换，不保存")
+        alert.beginSheetModal(for: window) { result in completionHandler(result == .alertSecondButtonReturn) }
     }
 
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {

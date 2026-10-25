@@ -1,0 +1,2 @@
+-r requirements.txt
+mlx-audio[stt]==0.6.1; sys_platform == "darwin" and platform_machine == "arm64"

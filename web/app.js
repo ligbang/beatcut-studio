@@ -237,3 +237,5 @@ for(const [id,factor] of [['half-tempo',.5],['double-tempo',2]]) $(id).onclick=(
 
 window.beatcutCanClose=()=>!state.dirty;
 $('mode').addEventListener('change',()=>{$('clips-details').open=$('mode').value!=='markers';});
+
+for(const link of document.querySelectorAll('.mode-tabs a'))link.onclick=e=>{if(new URL(link.href).pathname===location.pathname){e.preventDefault();return;}if((state.dirty||state.busy)&&!confirm('当前项目有未保存的修改。取消后可先保存项目；继续切换会放弃这些修改。'))e.preventDefault();};

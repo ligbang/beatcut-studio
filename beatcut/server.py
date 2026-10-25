@@ -21,6 +21,7 @@ from . import media as storage
 from .media import analyze, ffmpeg, inspect_media, load_media, media_dir, suggest_shortening
 from .models import Project, ShortenRequest
 from .timeline import build_plan, make_fcpxml
+from . import narration
 
 app = FastAPI(title="BeatCut Studio", version=__version__)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
@@ -278,6 +279,39 @@ def demo():
         clips.append(inspect_media(path, clip_id, "clip"))
     manifest.write_text(json.dumps(dict(music=media_id, clips=[c["id"] for c in clips])))
     return dict(music=public_media(music), clips=[public_media(c) for c in clips])
+
+
+@app.post('/api/narration/align')
+def align_narration(body: narration.NarrationRequest):
+    return narration.start_alignment(body)
+
+
+@app.get('/api/narration/jobs/{job_id}')
+def narration_job(job_id: str):
+    if job_id not in narration.JOBS:
+        raise HTTPException(404)
+    result = narration.JOBS[job_id].copy()
+    result.pop('cancel', None)
+    return result
+
+
+@app.post('/api/narration/jobs/{job_id}/cancel')
+def cancel_narration(job_id: str):
+    if job_id not in narration.JOBS:
+        raise HTTPException(404)
+    narration.JOBS[job_id]['cancel'] = True
+    return dict(message='将在当前音频片段处理完后取消')
+
+
+@app.post('/api/narration/validate')
+def validate_narration(body: narration.NarrationProject):
+    narration.validate_project(body)
+    return body.model_dump()
+
+
+@app.post('/api/narration/export')
+def export_narration(body: narration.NarrationProject):
+    return narration.export_project(body)
 
 
 app.mount("/", StaticFiles(directory=storage.ROOT / "web", html=True), name="web")
